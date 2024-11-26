@@ -17,6 +17,7 @@ import { useDispatch } from "react-redux";
 import { showMessage } from "app/store/fuse/messageSlice";
 import { fetchLatestPosts } from "src/services/api";
 import PostCardCopy from "./postCarddCopy";
+import jwtService from "../../auth/services/jwtService";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
@@ -59,7 +60,12 @@ function SignUpPage() {
     resolver: yupResolver(schema),
   });
 
-  const { isValid, dirtyFields, errors } = formState;
+
+  useEffect(() => {
+    document.title = "Ihub Connect - Team Work and Value Creation - Sign Up";
+  }, []);
+
+  const { isValid, dirtyFields, errors, setError } = formState;
 
   useEffect(() => {
     const getPosts = async () => {
@@ -75,9 +81,28 @@ function SignUpPage() {
   }, [dispatch]);
 
   function onSubmit({ displayName, password, email }) {
-    // Dummy service for user registration
-    console.log("Sign Up submitted:", { displayName, password, email });
-    reset(defaultValues);
+    jwtService
+      .createUser({
+        displayName,
+        password,
+        email,
+      })
+      .then((user) => {
+        // No need to do anything, registered user data will be set at app/auth/AuthContext
+      })
+      .catch((_errors) => {
+        _errors.forEach((error) => {
+          const { type, message } = error;
+          dispatch(showMessage({ message }));
+        });
+      });
+    reset({
+      displayName: "",
+      email: "",
+      password: "",
+      passwordConfirm: "",
+      acceptTermsConditions: false
+    });
   }
 
   const sliderSettings = {
